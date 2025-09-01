@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Classroom Timer</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Home Tab Styles */
+        .home-tab {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+        }
+        
+        .home-btn {
+            padding: 8px 16px;
+            background-color: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .home-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .timer-display {
+            padding: 40px 20px;
+            text-align: center;
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        #time {
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-variant-numeric: tabular-nums;
+            transition: var(--transition);
+        }
+        
+        .timer-ended {
+            color: var(--warning) !important;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+        
+        #start-btn {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        #start-btn:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        #pause-btn {
+            background-color: var(--gray);
+            color: white;
+        }
+        
+        #pause-btn:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        #reset-btn {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        #reset-btn:hover {
+            background-color: #e20c74;
+            transform: translateY(-2px);
+        }
+        
+        .settings {
+            padding: 20px;
+            background-color: rgba(108, 117, 125, 0.05);
+        }
+        
+        .timer-types {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .timer-type-btn {
+            padding: 10px 15px;
+            background-color: white;
+            border: 2px solid var(--gray);
+            border-radius: 50px;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .timer-type-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .time-inputs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .time-input {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .time-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .time-input input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .time-input input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .presets {
+            margin-top: 20px;
+        }
+        
+        .presets h3 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+        
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            padding: 8px 15px;
+            background-color: white;
+            border: 2px solid var(--success);
+            border-radius: 50px;
+            color: var(--success);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .preset-btn:hover {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .custom-preset {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        #preset-name {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        #save-preset {
+            padding: 10px 20px;
+            background-color: var(--success);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        #save-preset:hover {
+            background-color: #3aa5d0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 600px) {
+            #time {
+                font-size: 3.5rem;
+            }
+            
+            button {
+                min-width: 100px;
+                padding: 10px 15px;
+            }
+            
+            .timer-type-btn, .time-input {
+                min-width: 100%;
+            }
+            
+            .home-btn {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Tab -->
+        <div class="home-tab">
+            <button class="home-btn" id="home-btn">
+                <span>Home</span>
+            </button>
+        </div>
+        
+        <header>
+            <h1>Advanced Classroom Timer</h1>
+            <p>Manage your class time effectively</p>
+        </header>
+        
+        <div class="timer-display">
+            <div id="time">00:00:00</div>
+        </div>
+        
+        <div class="controls">
+            <button id="start-btn">Start</button>
+            <button id="pause-btn">Pause</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+        
+        <div class="settings">
+            <div class="timer-types">
+                <button class="timer-type-btn active" data-type="countdown">Countdown</button>
+                <button class="timer-type-btn" data-type="stopwatch">Stopwatch</button>
+                <button class="timer-type-btn" data-type="interval">Interval</button>
+            </div>
+            
+            <div class="time-inputs">
+                <div class="time-input">
+                    <label for="hours">Hours</label>
+                    <input type="number" id="hours" min="0" max="99" value="0">
+                </div>
+                <div class="time-input">
+                    <label for="minutes">Minutes</label>
+                    <input type="number" id="minutes" min="0" max="59" value="5">
+                </div>
+                <div class="time-input">
+                    <label for="seconds">Seconds</label>
+                    <input type="number" id="seconds" min="0" max="59" value="0">
+                </div>
+            </div>
+            
+            <div class="presets">
+                <h3>Quick Presets</h3>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-minutes="1">1 Minute</button>
+                    <button class="preset-btn" data-minutes="5">5 Minutes</button>
+                    <button class="preset-btn" data-minutes="10">10 Minutes</button>
+                    <button class="preset-btn" data-minutes="15">15 Minutes</button>
+                </div>
+                
+                <div class="custom-preset">
+                    <input type="text" id="preset-name" placeholder="Preset name">
+                    <button id="save-preset">Save Preset</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Advanced Classroom Timer &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const timeDisplay = document.getElementById('time');
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const hoursInput = document.getElementById('hours');
+            const minutesInput = document.getElementById('minutes');
+            const secondsInput = document.getElementById('seconds');
+            const timerTypeBtns = document.querySelectorAll('.timer-type-btn');
+            const presetBtns = document.querySelectorAll('.preset-btn');
+            const savePresetBtn = document.getElementById('save-preset');
+            const presetNameInput = document.getElementById('preset-name');
+            const homeBtn = document.getElementById('home-btn');
+            
+            // Home button functionality
+            homeBtn.addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+            
+            // Timer state
+            let timer = {
+                type: 'countdown', // countdown, stopwatch, interval
+                totalSeconds: 300, // 5 minutes default
+                running: false,
+                intervalId: null,
+                endTime: null,
+                pausedSeconds: 0
+            };
+            
+            // Initialize the timer display
+            updateDisplay();
+            
+            // Event Listeners
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            
+            // Input validation
+            [hoursInput, minutesInput, secondsInput].forEach(input => {
+                input.addEventListener('change', validateInputs);
+                input.addEventListener('input', updateTotalSeconds);
+            });
+            
+            // Timer type selection
+            timerTypeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    timerTypeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    timer.type = this.dataset.type;
+                    resetTimer();
+                    
+                    // Special handling for interval timer
+                    if (timer.type === 'interval') {
+                        alert('Interval mode: Timer will reset and restart when it reaches zero');
+                    }
+                });
+            });
+            
+            // Preset buttons
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const minutes = parseInt(this.dataset.minutes);
+                    hoursInput.value = 0;
+                    minutesInput.value = minutes;
+                    secondsInput.value = 0;
+                    updateTotalSeconds();
+                    resetTimer();
+                });
+            });
+            
+            // Save custom preset
+            savePresetBtn.addEventListener('click', function() {
+                const name = presetNameInput.value.trim();
+                if (name === '') {
+                    alert('Please enter a name for your preset');
+                    return;
+                }
+                
+                const hours = parseInt(hoursInput.value) || 0;
+                const minutes = parseInt(minutesInput.value) || 0;
+                const seconds = parseInt(secondsInput.value) || 0;
+                
+                if (hours === 0 && minutes === 0 && seconds === 0) {
+                    alert('Cannot save a preset with zero time');
+                    return;
+                }
+                
+                // In a real application, you would save this to localStorage
+                alert(`Preset "${name}" saved! (In a real app, this would be saved to memory)`);
+                presetNameInput.value = '';
+            });
+            
+            // Functions
+            function validateInputs() {
+                hoursInput.value = Math.max(0, Math.min(99, parseInt(hoursInput.value) || 0));
+                minutesInput.value = Math.max(0, Math.min(59, parseInt(minutesInput.value) || 0));
+                secondsInput.value = Math.max(0, Math.min(59, parseInt(secondsInput.value) || 0));
+            }
+            
+            function updateTotalSeconds() {
+                const hours = parseInt(hoursInput.value) || 0;
+                const minutes = parseInt(minutesInput.value) || 0;
+                const seconds = parseInt(secondsInput.value) || 0;
+                
+                timer.totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                updateDisplay();
+            }
+            
+            function updateDisplay() {
+                let hours, minutes, seconds;
+                
+                if (timer.type === 'countdown' || timer.type === 'interval') {
+                    hours = Math.floor(timer.totalSeconds / 3600);
+                    minutes = Math.floor((timer.totalSeconds % 3600) / 60);
+                    seconds = timer.totalSeconds % 60;
+                } else { // stopwatch
+                    hours = Math.floor(timer.pausedSeconds / 3600);
+                    minutes = Math.floor((timer.pausedSeconds % 3600) / 60);
+                    seconds = timer.pausedSeconds % 60;
+                }
+                
+                timeDisplay.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Add warning class if time is running out (for countdown)
+                if (timer.type !== 'stopwatch' && timer.totalSeconds <= 10 && timer.totalSeconds > 0) {
+                    timeDisplay.classList.add('timer-ended');
+                } else {
+                    timeDisplay.classList.remove('timer-ended');
+                }
+            }
+            
+            function startTimer() {
+                if (timer.running) return;
+                
+                if (timer.type === 'countdown' || timer.type === 'interval') {
+                    // For countdown/interval, use the set time
+                    if (timer.totalSeconds <= 0) {
+                        alert('Please set a time greater than zero');
+                        return;
+                    }
+                    
+                    timer.endTime = Date.now() + (timer.totalSeconds * 1000);
+                } else {
+                    // For stopwatch, start from the paused time
+                    timer.endTime = Date.now() + (timer.pausedSeconds * 1000);
+                }
+                
+                timer.running = true;
+                timer.intervalId = setInterval(updateTimer, 100);
+            }
+            
+            function pauseTimer() {
+                if (!timer.running) return;
+                
+                clearInterval(timer.intervalId);
+                timer.running = false;
+                
+                if (timer.type === 'stopwatch') {
+                    // Save the current time for stopwatch
+                    timer.pausedSeconds = Math.floor((timer.endTime - Date.now()) / 1000);
+                }
+            }
+            
+            function resetTimer() {
+                clearInterval(timer.intervalId);
+                timer.running = false;
+                
+                if (timer.type === 'stopwatch') {
+                    timer.pausedSeconds = 0;
+                } else {
+                    updateTotalSeconds(); // Reset to input values
+                }
+                
+                updateDisplay();
+                timeDisplay.classList.remove('timer-ended');
+            }
+            
+            function updateTimer() {
+                const now = Date.now();
+                const remainingMs = timer.endTime - now;
+                
+                if (timer.type === 'stopwatch') {
+                    timer.pausedSeconds = Math.floor(remainingMs / 1000);
+                    updateDisplay();
+                    return;
+                }
+                
+                // For countdown and interval timers
+                if (remainingMs <= 0) {
+                    timer.totalSeconds = 0;
+                    updateDisplay();
+                    timeDisplay.classList.add('timer-ended');
+                    
+                    // Play sound (in a real app)
+                    alert('Time is up!');
+                    
+                    clearInterval(timer.intervalId);
+                    timer.running = false;
+                    
+                    // Restart if it's an interval timer
+                    if (timer.type === 'interval') {
+                        setTimeout(() => {
+                            updateTotalSeconds(); // Reset to original time
+                            startTimer();
+                        }, 1000);
+                    }
+                    
+                    return;
+                }
+                
+                timer.totalSeconds = Math.ceil(remainingMs / 1000);
+                updateDisplay();
+            }
+        });
+    </script>
+</body>
+</html>

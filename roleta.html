@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Spin the Wheel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            margin-right: 0;
+        }
+        
+        .wheel-section {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+            width: 100%;
+            max-width: 700px;
+        }
+        
+        .wheel-container,
+        .chart-wheel-container {
+            width: 700px;
+            height: 700px;
+            max-width: 1400px;
+            max-height: 1400px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .wheel,
+        #wheel {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 1400px;
+            max-height: 1400px;
+        }
+        
+        /* FIXED: Correct pointer positioning */
+        .wheel-pointer {
+            position: absolute;
+            top: -35px; /* Positioned above the wheel */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 80px;
+            background: #ffcc00;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 101;
+            border: 3px solid #b38f00;
+            box-shadow: 0 2px 12px 2px rgba(0,0,0,0.25);
+            pointer-events: none;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #ffcc00, #ff9900);
+            color: #1a2a6c;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .result-section {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+        }
+        
+        .management-section {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            max-width: 90vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.97);
+            padding: 20px;
+            border-radius: 15px 0 0 15px;
+            box-shadow: -2px 0 20px rgba(0,0,0,0.3);
+            z-index: 2000;
+            transition: right 0.4s cubic-bezier(0.77,0,0.175,1);
+            overflow-y: auto;
+            display: block;
+        }
+        
+        .management-section.open {
+            right: 0;
+        }
+        
+        .manage-toggle-btn {
+            position: fixed;
+            top: 80px;
+            right: 0;
+            background: #ffcc00;
+            color: #1a2a6c;
+            border: none;
+            border-radius: 8px 0 0 8px;
+            padding: 12px 18px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2100;
+            box-shadow: -2px 2px 10px rgba(0,0,0,0.2);
+            transition: background 0.3s;
+        }
+        
+        .manage-toggle-btn:hover {
+            background: #ffd700;
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .wheel-container,
+            .chart-wheel-container {
+                width: 98vw;
+                height: 98vw;
+                max-width: 98vw;
+                max-height: 98vw;
+            }
+            .wheel,
+            #wheel {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 98vw;
+                max-height: 98vw;
+            }
+        }
+        
+        /* Additional styles for the chart wheel */
+        .chart-wheel-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto;
+        }
+        
+        #spin-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            height: 26%;
+            width: 26%;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 0;
+            background: radial-gradient(#fdcf3b 50%, #d88a40 85%);
+            color: #c66e16;
+            text-transform: uppercase;
+            font-size: 1.8em;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .wheel-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .wheel-type-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .wheel-type-btn.active {
+            background: #ffcc00;
+            color: #1a2a6c;
+        }
+        
+        .name-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .name-form input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+        
+        .name-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        
+        .name-item .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .name-item button {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        
+        .history-section {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-wheel"></i> Advanced Spin the Wheel</h1>
+            <p>Add pupil names, spin the wheel, and select a random person!</p>
+            <!-- Leaderboard Tab -->
+            <div style="margin-top: 18px;">
+                <a href="index.html" style="
+                    display: inline-block;
+                    background: #3498db;
+                    color: white;
+                    padding: 10px 28px;
+                    border-radius: 50px;
+                    font-family: 'Comic Neue', cursive;
+                    font-weight: 700;
+                    font-size: 1.1rem;
+                    text-decoration: none;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    transition: background 0.3s;
+                " onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                    <i class="fas fa-list-ol"></i> Leaderboard
+                </a>
+            </div>
+        </header>
+        
+        <div class="wheel-type-selector">
+            <button id="canvasWheelBtn" class="wheel-type-btn active">Canvas Wheel</button>
+            <button id="chartWheelBtn" class="wheel-type-btn">Chart Wheel</button>
+        </div>
+        
+        <div class="app-container" style="justify-content: center;">
+            <div class="wheel-section" style="margin: 0 auto;">
+                <h2 class="section-title">Spin the Wheel</h2>
+                
+                <!-- Canvas Wheel -->
+                <div id="canvasWheel" class="wheel-container">
+                    <canvas id="wheelCanvas" class="wheel" width="700" height="700"></canvas>
+                    <div class="wheel-pointer"></div>
+                </div>
+                
+                <!-- Chart Wheel -->
+                <div id="chartWheel" class="chart-wheel-container" style="display: none;">
+                    <canvas id="wheel" width="700" height="700"></canvas>
+                    <div class="wheel-pointer"></div>
+                    <button id="spin-btn">Spin</button>
+                </div>
+                
+                <div class="controls">
+                    <button id="spinBtn"><i class="fas fa-play"></i> Spin</button>
+                    <button id="resetBtn"><i class="fas fa-redo"></i> Reset</button>
+                </div>
+                
+                <div class="result-section">
+                    <p id="result">Spin the wheel to get a result</p>
+                    <p id="final-value" style="display: none;"></p>
+                </div>
+            </div>
+            <!-- Management section hidden by default, slide in/out -->
+            <button class="manage-toggle-btn" id="manageToggleBtn">
+                <i class="fas fa-users-cog"></i> Manage Pupils
+            </button>
+            <div class="management-section" id="managementSection">
+                <h2 class="section-title">Manage Pupil Names</h2>
+                
+                <div class="name-form">
+                    <input type="text" id="nameInput" placeholder="Enter a name">
+                    <button id="addBtn"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                
+                <div class="name-list" id="nameList">
+                    <!-- Names will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="history-section">
+            <h2 class="section-title">Spin History</h2>
+            <div class="history-list" id="historyList">
+                <!-- History will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio elements for sound effects -->
+    <audio id="spinSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-spinning-wheel-1041.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="fireworkSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-firework-explosion-3078.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Canvas Wheel Elements
+            const wheelCanvas = document.getElementById('wheelCanvas');
+            const ctx = wheelCanvas.getContext('2d');
+            const spinBtn = document.getElementById('spinBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const addBtn = document.getElementById('addBtn');
+            const nameInput = document.getElementById('nameInput');
+            const nameList = document.getElementById('nameList');
+            const resultElement = document.getElementById('result');
+            const historyList = document.getElementById('historyList');
+            
+            // Chart Wheel Elements
+            const wheel = document.getElementById("wheel");
+            const spinBtnChart = document.getElementById("spin-btn");
+            const finalValue = document.getElementById("final-value");
+            const canvasWheelBtn = document.getElementById("canvasWheelBtn");
+            const chartWheelBtn = document.getElementById("chartWheelBtn");
+            const canvasWheel = document.getElementById("canvasWheel");
+            const chartWheel = document.getElementById("chartWheel");
+            
+            // Sound elements
+            const spinSound = document.getElementById('spinSound');
+            const fireworkSound = document.getElementById('fireworkSound');
+            
+            let names = [
+                "ANDUJAR, REJIE MARK, B",
+                "MAGONLIMO II, SALAC",
+                "PEIRAT, ORJESHLY, MAGI...",
+                "TOLEDGEDREY, VILLARUZ",
+                "LOPEZ, MARK J.",
+                "ARCHALS, JUDIA, ABISO",
+                "VERALLOUOVEN, HUBID",
+                "ROUSS, JANINA, EDCAY"
+            ];
+            let spinHistory = [];
+            let spinning = false;
+            let currentRotation = 0;
+            let spinTimeout = null;
+            let segments = [];
+            let colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#8ac6d1', '#ff6b6b',
+                '#339af0', '#51cf66', '#fcc419', '#ff922b'
+            ];
+            
+            // Chart Wheel Variables
+            let myChart;
+            let rotationValues = [];
+            let pieColors = [];
+            let chartRotation = 0;
+            let chartInterval = null;
+            
+            // Initialize the wheels and name list
+            initializeCanvasWheel();
+            initializeChartWheel();
+            renderNameList();
+            
+            // Load names from localStorage if available (shared with index.html)
+            function loadNamesFromLeaderboard() {
+                let currentUser = null;
+                try {
+                    currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                } catch (e) {}
+                let leaderboardData = null;
+                if (currentUser && currentUser.isAuthenticated) {
+                    leaderboardData = localStorage.getItem('grade5Leaderboard_' + currentUser.username);
+                } else {
+                    leaderboardData = localStorage.getItem('grade5Leaderboard');
+                }
+                if (leaderboardData) {
+                    try {
+                        const students = JSON.parse(leaderboardData);
+                        names = students.map(s => s.name);
+                    } catch (e) {
+                        // fallback to default names
+                    }
+                }
+            }
+
+            loadNamesFromLeaderboard();
+
+            // Event listeners
+            spinBtn.addEventListener('click', function() {
+                if (chartWheel.style.display === "none") {
+                    spinCanvasWheel();
+                } else {
+                    spinChartWheel();
+                }
+            });
+            
+            resetBtn.addEventListener('click', resetWheel);
+            addBtn.addEventListener('click', addName);
+            spinBtnChart.addEventListener('click', spinChartWheel);
+            
+            canvasWheelBtn.addEventListener('click', function() {
+                canvasWheel.style.display = "block";
+                chartWheel.style.display = "none";
+                canvasWheelBtn.classList.add("active");
+                chartWheelBtn.classList.remove("active");
+                finalValue.style.display = "none";
+                resultElement.style.display = "block";
+            });
+            
+            chartWheelBtn.addEventListener('click', function() {
+                canvasWheel.style.display = "none";
+                chartWheel.style.display = "block";
+                chartWheelBtn.classList.add("active");
+                canvasWheelBtn.classList.remove("active");
+                finalValue.style.display = "block";
+                resultElement.style.display = "none";
+                updateChartWheel();
+            });
+            
+            // Initialize the canvas wheel
+            function initializeCanvasWheel() {
+                drawWheel();
+            }
+            
+            // Initialize the chart wheel
+            function initializeChartWheel() {
+                updateChartWheel();
+            }
+            
+            // Update chart wheel based on names
+            function updateChartWheel() {
+                if (names.length === 0) return;
+                
+                // Generate rotation values based on number of names
+                rotationValues = [];
+                const degreePerSegment = 360 / names.length;
+                
+                for (let i = 0; i < names.length; i++) {
+                    rotationValues.push({
+                        minDegree: i * degreePerSegment,
+                        maxDegree: (i + 1) * degreePerSegment,
+                        value: names[i]
+                    });
+                }
+                
+                // Generate data and colors
+                const data = Array(names.length).fill(100 / names.length);
+                pieColors = colors.slice(0, names.length);
+                
+                // Create or update chart
+                if (myChart) {
+                    myChart.data.labels = names.map(name => 
+                        name.length > 10 ? name.substring(0, 10) + '...' : name
+                    );
+                    myChart.data.datasets[0].data = data;
+                    myChart.data.datasets[0].backgroundColor = pieColors;
+                    myChart.update();
+                } else {
+                    myChart = new Chart(wheel, {
+                        plugins: [ChartDataLabels],
+                        type: "pie",
+                        data: {
+                            labels: names.map(name => 
+                                name.length > 10 ? name.substring(0, 10) + '...' : name
+                            ),
+                            datasets: [{
+                                backgroundColor: pieColors,
+                                data: data,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            animation: { duration: 0 },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return names[context.dataIndex];
+                                        }
+                                    }
+                                },
+                                legend: {
+                                    display: false,
+                                },
+                                datalabels: {
+                                    color: "#ffffff",
+                                    formatter: (_, context) => context.chart.data.labels[context.dataIndex],
+                                    font: { size: names.length > 8 ? 12 : 16 },
+                                },
+                            },
+                        },
+                    });
+                }
+            }
+            
+            // Draw the canvas wheel
+            function drawWheel() {
+                const centerX = wheelCanvas.width / 2;
+                const centerY = wheelCanvas.height / 2;
+                const radius = wheelCanvas.width / 2 - 10;
+
+                ctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+
+                if (names.length === 0) {
+                    // Draw empty wheel
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#333';
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Add names to begin', centerX, centerY);
+                    return;
+                }
+
+                segments = [];
+                const anglePerSegment = (2 * Math.PI) / names.length;
+
+                for (let i = 0; i < names.length; i++) {
+                    const startAngle = i * anglePerSegment + currentRotation;
+                    const endAngle = (i + 1) * anglePerSegment + currentRotation;
+
+                    // Draw segment
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Save segment info
+                    segments.push({
+                        startAngle: startAngle,
+                        endAngle: endAngle,
+                        name: names[i]
+                    });
+
+                    // Draw text (centered and closer to center)
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(startAngle + anglePerSegment / 2);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#000';
+                    ctx.font = '16px Arial';
+
+                    // Truncate long names to fit in the wheel
+                    const maxChars = 15;
+                    const displayName = names[i].length > maxChars ?
+                        names[i].substring(0, maxChars) + '...' : names[i];
+
+                    ctx.fillText(displayName, radius * 0.65, 0); // 0.65 moves text closer to center
+                    ctx.restore();
+                }
+                
+                // Draw center circle
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 20, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fill();
+                ctx.stroke();
+            }
+            
+            // Spin the canvas wheel
+            function spinCanvasWheel() {
+                // If already spinning, stop the current animation first
+                if (spinning && spinTimeout) {
+                    cancelAnimationFrame(spinTimeout);
+                    spinning = false;
+                }
+                
+                if (names.length === 0) return;
+                
+                spinning = true;
+                resultElement.textContent = "Spinning...";
+
+                // Play spinning sound
+                spinSound.currentTime = 0;
+                spinSound.play();
+
+                const anglePerSegment = (2 * Math.PI) / names.length;
+                const targetIndex = Math.floor(Math.random() * names.length);
+                const targetSegmentCenter = (targetIndex * anglePerSegment) + (anglePerSegment / 2);
+
+                const pointerAngle = 3 * Math.PI / 2;
+                const targetFinalRotation = pointerAngle - targetSegmentCenter;
+                const fullRotations = 5;
+                const targetRotation = currentRotation + (fullRotations * 2 * Math.PI) + targetFinalRotation;
+
+                let lastRotation = currentRotation;
+                let velocity = 0.35 + Math.random() * 0.15; // initial speed (radians/frame)
+                const minVelocity = 0.002; // minimum speed before stopping
+                const deceleration = 0.985;
+
+                function animate() {
+                    if ((velocity > minVelocity) || (Math.abs(currentRotation - targetRotation) > 0.01)) {
+                        velocity *= deceleration;
+                        lastRotation += velocity;
+                        currentRotation = lastRotation;
+                        drawWheel();
+
+                        // Calculate the index pointed by the arrow during animation
+                        let pointerAngleAbs = (3 * Math.PI / 2 - currentRotation) % (2 * Math.PI);
+                        if (pointerAngleAbs < 0) pointerAngleAbs += 2 * Math.PI;
+                        let selectedIndex = Math.floor(pointerAngleAbs / anglePerSegment);
+                        if (selectedIndex >= names.length) selectedIndex = 0;
+                        const selectedName = names[selectedIndex];
+                        resultElement.textContent = `Selected: ${selectedName}`;
+
+                        spinTimeout = requestAnimationFrame(animate);
+                    } else {
+                        // Snap to final position
+                        currentRotation = targetRotation;
+                        drawWheel();
+                        let pointerAngleAbs = (3 * Math.PI / 2 - currentRotation) % (2 * Math.PI);
+                        if (pointerAngleAbs < 0) pointerAngleAbs += 2 * Math.PI;
+                        let selectedIndex = Math.floor(pointerAngleAbs / anglePerSegment);
+                        if (selectedIndex >= names.length) selectedIndex = 0;
+                        const selectedName = names[selectedIndex];
+                        resultElement.textContent = `Selected: ${selectedName}`;
+                        spinning = false;
+                        
+                        // Stop spinning sound and play fireworks
+                        spinSound.pause();
+                        playFireworks();
+                        addToHistory(selectedName);
+                    }
+                }
+
+                animate();
+            }
+            
+            // Spin the chart wheel
+            function spinChartWheel() {
+                // If already spinning, stop the current animation first
+                if (spinning && chartInterval) {
+                    clearInterval(chartInterval);
+                    spinning = false;
+                    spinBtnChart.disabled = false;
+                }
+                
+                if (names.length === 0) return;
+                
+                spinning = true;
+                finalValue.innerHTML = `<p>Spinning...</p>`;
+                spinBtnChart.disabled = true;
+
+                // Play spinning sound
+                spinSound.currentTime = 0;
+                spinSound.play();
+
+                // Generate random degrees to stop at
+                let randomDegree = Math.floor(Math.random() * (355 - 0 + 1) + 0);
+                
+                // Calculate which segment this corresponds to
+                const degreePerSegment = 360 / names.length;
+                const selectedIndex = Math.floor(randomDegree / degreePerSegment);
+                const selectedName = names[selectedIndex];
+                
+                // Reset rotation to 0 for multiple spins
+                chartRotation = 0;
+                myChart.options.rotation = chartRotation;
+                myChart.update();
+                
+                let count = 0;
+                let resultValue = 101;
+                
+                chartInterval = window.setInterval(() => {
+                    chartRotation += resultValue;
+                    myChart.options.rotation = chartRotation;
+                    myChart.update();
+                    
+                    if (chartRotation >= 360) {
+                        count += 1;
+                        resultValue -= 5;
+                        chartRotation = 0;
+                    } else if (count > 15 && chartRotation >= randomDegree) {
+                        clearInterval(chartInterval);
+                        spinning = false;
+                        
+                        // Stop spinning sound and play fireworks
+                        spinSound.pause();
+                        playFireworks();
+                        
+                        finalValue.innerHTML = `<p>Selected: ${selectedName}</p>`;
+                        addToHistory(selectedName);
+                        spinBtnChart.disabled = false;
+                    }
+                }, 10);
+            }
+            
+            // Play fireworks sound effect (3 times with slight delay)
+            function playFireworks() {
+                let count = 0;
+                const playNextFirework = () => {
+                    if (count < 3) {
+                        fireworkSound.currentTime = 0;
+                        fireworkSound.play();
+                        count++;
+                        setTimeout(playNextFirework, 300); // 300ms delay between fireworks
+                    }
+                };
+                playNextFirework();
+            }
+            
+            // Reset the wheel
+            function resetWheel() {
+                // Stop any ongoing animations
+                if (spinning) {
+                    if (spinTimeout) {
+                        cancelAnimationFrame(spinTimeout);
+                        spinTimeout = null;
+                    }
+                    if (chartInterval) {
+                        clearInterval(chartInterval);
+                        chartInterval = null;
+                    }
+                    spinning = false;
+                    
+                    // Stop any playing sounds
+                    spinSound.pause();
+                }
+                
+                currentRotation = 0;
+                chartRotation = 0;
+                
+                if (chartWheel.style.display === "none") {
+                    drawWheel();
+                    resultElement.textContent = "Spin the wheel to get a result";
+                } else {
+                    if (myChart) {
+                        myChart.options.rotation = 0;
+                        myChart.update();
+                    }
+                    finalValue.innerHTML = `<p>Spin the wheel to get a result</p>`;
+                    spinBtnChart.disabled = false;
+                }
+            }
+            
+            // Add a name to the list
+            function addName() {
+                const name = nameInput.value.trim();
+                if (name) {
+                    names.push(name);
+                    nameInput.value = '';
+                    renderNameList();
+                    
+                    if (chartWheel.style.display === "none") {
+                        drawWheel();
+                    } else {
+                        updateChartWheel();
+                    }
+                }
+            }
+            
+            // Render the name list
+            function renderNameList() {
+                nameList.innerHTML = '';
+                
+                names.forEach((name, index) => {
+                    const nameItem = document.createElement('div');
+                    nameItem.className = 'name-item';
+                    
+                    nameItem.innerHTML = `
+                        <span>${name}</span>
+                        <div class="actions">
+                            <button class="edit-btn" data-index="${index}"><i class="fas fa-edit"></i></button>
+                            <button class="delete-btn" data-index="${index}"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    
+                    nameList.appendChild(nameItem);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        editName(index);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        deleteName(index);
+                    });
+                });
+            }
+            
+            // Edit a name
+            function editName(index) {
+                const newName = prompt('Edit name:', names[index]);
+                if (newName !== null) {
+                    names[index] = newName.trim();
+                    renderNameList();
+                    
+                    if (chartWheel.style.display === "none") {
+                        drawWheel();
+                    } else {
+                        updateChartWheel();
+                    }
+                }
+            }
+            
+            // Delete a name
+            function deleteName(index) {
+                if (confirm('Are you sure you want to delete this name?')) {
+                    names.splice(index, 1);
+                    renderNameList();
+                    
+                    if (chartWheel.style.display === "none") {
+                        drawWheel();
+                    } else {
+                        updateChartWheel();
+                    }
+                }
+            }
+            
+            // Add to spin history
+            function addToHistory(name) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <span>${name}</span>
+                    <span>${timeString}</span>
+                `;
+                
+                // Add to beginning of history list
+                historyList.insertBefore(historyItem, historyList.firstChild);
+                
+                // Keep only last 10 history items
+                if (historyList.children.length > 10) {
+                    historyList.removeChild(historyList.lastChild);
+                }
+                
+                // Also add to our data array
+                spinHistory.unshift({ name, time: timeString });
+                if (spinHistory.length > 10) {
+                    spinHistory.pop();
+                }
+            }
+            
+            const manageToggleBtn = document.getElementById('manageToggleBtn');
+            const managementSection = document.getElementById('managementSection');
+
+            manageToggleBtn.addEventListener('click', function() {
+                managementSection.classList.toggle('open');
+            });
+
+            // Optionally, close management-section when clicking outside
+            document.addEventListener('click', function(e) {
+                if (
+                    managementSection.classList.contains('open') &&
+                    !managementSection.contains(e.target) &&
+                    e.target !== manageToggleBtn
+                ) {
+                    managementSection.classList.remove('open');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

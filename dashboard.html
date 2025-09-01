@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade 5 Reading Progress Tracker - Data Summary</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4e73df;
+            --secondary: #6f42c1;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background: linear-gradient(180deg, var(--primary) 10%, var(--secondary) 100%);
+            height: 100vh;
+            position: fixed;
+            color: white;
+            padding-top: 20px;
+            width: 250px;
+            overflow-y: auto;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+            color: var(--dark);
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--success);
+        }
+        
+        .stat-card.info {
+            border-left-color: var(--info);
+        }
+        
+        .stat-card.warning {
+            border-left-color: var(--warning);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-card.success .stat-number {
+            color: var(--success);
+        }
+        
+        .stat-card.info .stat-number {
+            color: var(--info);
+        }
+        
+        .stat-card.warning .stat-number {
+            color: var(--warning);
+        }
+        
+        .summary-table {
+            font-size: 0.9rem;
+        }
+        
+        .summary-table th {
+            background-color: #f8f9fc;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .summary-table tr:hover {
+            background-color: #f8f9fc;
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+        
+        .reading-level {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .level-independent {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .level-instructional {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .level-frustration {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .improvement-positive {
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .improvement-negative {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Custom styling for the Data Summary tab */
+        .data-summary-section {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .data-summary-section h5 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6e707e;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #5a5c69;
+        }
+        
+        .trend-indicator {
+            font-size: 0.9rem;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Add this navigation bar to the top of every main HTML file for consistent linking -->
+<!-- Example: Place just after <body> in dashboard.html, students.html, assessment.html, reading.html, reading-progress.html, leaderboard.html, roleta.html, timer.html, print.html, settings.html -->
+
+<nav style="width:100%;background:linear-gradient(90deg,#4e73df,#6f42c1);padding:12px 0;margin-bottom:20px;display:flex;justify-content:center;gap:18px;border-radius:10px;">
+    <a href="dashboard.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-home"></i> Dashboard</a>
+    <a href="students.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-user-graduate"></i> Students</a>
+    <a href="assessment.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-file-alt"></i> Assessments</a>
+    <a href="reading.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-book"></i> Reading</a>
+    <a href="reading-progress.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-chart-line"></i> Reading Progress</a>
+    <a href="leaderboard.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-trophy"></i> Leaderboard</a>
+    <a href="roleta.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-wheel"></i> Spin the Wheel</a>
+    <a href="timer.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-stopwatch"></i> Timer</a>
+    <a href="print.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-print"></i> Print Reports</a>
+    <a href="settings.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-cog"></i> Settings</a>
+    <a href="login.html" style="color:#fff;font-weight:700;text-decoration:none;font-size:1.1rem;"><i class="fas fa-sign-in-alt"></i> Login</a>
+</nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="text-center mb-4">
+                    <h4><i class="fas fa-book-reader me-2"></i>Reading Tracker</h4>
+                    <p class="text-white-50 small">Grade 5 Phil-IRI Monitoring</p>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-home me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="students.html">
+                            <i class="fas fa-user-graduate me-2"></i>Students
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="reading-progress.html">
+                            <i class="fas fa-chart-line me-2"></i>Reading Progress
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="assessment.html">
+                            <i class="fas fa-file-alt me-2"></i>Assessments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="leaderboard.html">
+                            <i class="fas fa-trophy me-2"></i>Leaderboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="print.html">
+                            <i class="fas fa-print me-2"></i>Print Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="settings.html">
+                            <i class="fas fa-cog me-2"></i>Settings
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="mt-5 text-center">
+                    <div class="card bg-light text-dark">
+                        <div class="card-body py-3">
+                            <h6>Phil-IRI Guide</h6>
+                            <p class="small mb-0">Independent: 97-100% WR, 80-100% Comp</p>
+                            <p class="small mb-0">Instructional: 90-96% WR, 59-79% Comp</p>
+                            <p class="small">Frustration: Below 90% WR, Below 59% Comp</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Data Summary Tab -->
+                <div id="data-summary">
+                    <div class="header">
+                        <h4 class="mb-0"><i class="fas fa-chart-pie me-2 text-primary"></i>Data Summary</h4>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="row mt-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="metric-label">Average Word Recognition</div>
+                                    <div class="metric-value">87.5%</div>
+                                    <div class="mt-2">
+                                        <span class="improvement-positive">+5.2% <i class="fas fa-arrow-up"></i></span>
+                                        <span class="text-muted small">from last month</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card success">
+                                <div class="card-body">
+                                    <div class="metric-label">Average Comprehension</div>
+                                    <div class="metric-value">76.3%</div>
+                                    <div class="mt-2">
+                                        <span class="improvement-positive">+7.8% <i class="fas fa-arrow-up"></i></span>
+                                        <span class="text-muted small">from last month</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card info">
+                                <div class="card-body">
+                                    <div class="metric-label">Assessments Completed</div>
+                                    <div class="metric-value">142</div>
+                                    <div class="mt-2">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 75%"></div>
+                                        </div>
+                                        <span class="text-muted small">of yearly goal</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card warning">
+                                <div class="card-body">
+                                    <div class="metric-label">Improvement Rate</div>
+                                    <div class="metric-value">63.8%</div>
+                                    <div class="mt-2">
+                                        <span class="improvement-positive">+12.4% <i class="fas fa-arrow-up"></i></span>
+                                        <span class="text-muted small">from last term</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts and Visualizations -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold">Performance by Assessment Type</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="assessmentTypeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold">Performance by Gender</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="genderChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Summary Tables -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold">Reading Level Distribution</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered summary-table" id="readingLevelTable">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Reading Level</th>
+                                                    <th>Count</th>
+                                                    <th>Percentage</th>
+                                                    <th>Average WR</th>
+                                                    <th>Average Comp</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="reading-level level-independent">Independent</span></td>
+                                                    <td>28</td>
+                                                    <td>39.4%</td>
+                                                    <td>96.8%</td>
+                                                    <td>88.5%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="reading-level level-instructional">Instructional</span></td>
+                                                    <td>32</td>
+                                                    <td>45.1%</td>
+                                                    <td>92.4%</td>
+                                                    <td>68.3%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="reading-level level-frustration">Frustration</span></td>
+                                                    <td>11</td>
+                                                    <td>15.5%</td>
+                                                    <td>84.7%</td>
+                                                    <td>48.2%</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold">Assessment Type Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered summary-table" id="assessmentTypeTable">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Assessment Type</th>
+                                                    <th>Count</th>
+                                                    <th>Average WR</th>
+                                                    <th>Average Comp</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Oral Reading in Filipino</td>
+                                                    <td>56</td>
+                                                    <td>89.2%</td>
+                                                    <td>72.4%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Oral Reading in English</td>
+                                                    <td>48</td>
+                                                    <td>86.7%</td>
+                                                    <td>75.1%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Silent Reading in Filipino</td>
+                                                    <td>22</td>
+                                                    <td>91.5%</td>
+                                                    <td>81.3%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Silent Reading in English</td>
+                                                    <td>16</td>
+                                                    <td>88.9%</td>
+                                                    <td>79.6%</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Student Progress Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold">Student Progress Overview</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered summary-table" id="studentProgressTable">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Student Name</th>
+                                            <th>First Assessment</th>
+                                            <th>Latest Assessment</th>
+                                            <th>Progress (WR)</th>
+                                            <th>Progress (Comp)</th>
+                                            <th>Current Level</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Juan Dela Cruz</td>
+                                            <td>Aug 15, 2023</td>
+                                            <td>Oct 20, 2023</td>
+                                            <td class="improvement-positive">+12.4%</td>
+                                            <td class="improvement-positive">+15.8%</td>
+                                            <td><span class="reading-level level-instructional">Instructional</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Maria Santos</td>
+                                            <td>Aug 16, 2023</td>
+                                            <td>Oct 21, 2023</td>
+                                            <td class="improvement-positive">+8.7%</td>
+                                            <td class="improvement-positive">+10.2%</td>
+                                            <td><span class="reading-level level-independent">Independent</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Jose Reyes</td>
+                                            <td>Aug 17, 2023</td>
+                                            <td>Oct 22, 2023</td>
+                                            <td class="improvement-positive">+18.3%</td>
+                                            <td class="improvement-positive">+22.1%</td>
+                                            <td><span class="reading-level level-instructional">Instructional</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Ana Lopez</td>
+                                            <td>Aug 18, 2023</td>
+                                            <td>Oct 23, 2023</td>
+                                            <td class="improvement-positive">+5.6%</td>
+                                            <td class="improvement-positive">+9.3%</td>
+                                            <td><span class="reading-level level-frustration">Frustration</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Pedro Garcia</td>
+                                            <td>Aug 19, 2023</td>
+                                            <td>Oct 24, 2023</td>
+                                            <td class="improvement-positive">+10.9%</td>
+                                            <td class="improvement-positive">+13.5%</td>
+                                            <td><span class="reading-level level-independent">Independent</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="reading.js"></script>
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Assessment Type Chart
+            const typeCtx = document.getElementById('assessmentTypeChart').getContext('2d');
+            new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Oral Filipino', 'Oral English', 'Silent Filipino', 'Silent English'],
+                    datasets: [{
+                        label: 'Word Recognition',
+                        data: [89.2, 86.7, 91.5, 88.9],
+                        backgroundColor: '#4e73df'
+                    }, {
+                        label: 'Comprehension',
+                        data: [72.4, 75.1, 81.3, 79.6],
+                        backgroundColor: '#1cc88a'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Gender Chart
+            const genderCtx = document.getElementById('genderChart').getContext('2d');
+            new Chart(genderCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Male', 'Female'],
+                    datasets: [{
+                        label: 'Word Recognition',
+                        data: [85.3, 89.7],
+                        backgroundColor: '#4e73df'
+                    }, {
+                        label: 'Comprehension',
+                        data: [72.8, 79.8],
+                        backgroundColor: '#1cc88a'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+        });
+        
+        // Make all sidebar tabs functional by redirecting to their respective files
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dashboard tab
+            const dashboardTab = document.querySelector('a[href="reading.html"]');
+            if (dashboardTab) {
+                dashboardTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'dashboard.html';
+                });
+            }
+
+            // Students tab
+            const studentsTab = document.querySelector('a[href="students.html"]');
+            if (studentsTab) {
+                studentsTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'students.html';
+                });
+            }
+
+            // Reading Progress tab
+            const readingProgressTab = document.querySelector('a[href="reading-progress.html"]');
+            if (readingProgressTab) {
+                readingProgressTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'reading-progress.html';
+                });
+            }
+
+            // Assessments tab
+            const assessmentTab = document.querySelector('a[href="assessment.html"]');
+            if (assessmentTab) {
+                assessmentTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'assessment.html';
+                });
+            }
+
+            // Leaderboard tab
+            const leaderboardTab = document.querySelector('a[href="index.html"]');
+            if (leaderboardTab) {
+                leaderboardTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'index.html';
+                });
+            }
+
+            // Print Reports tab
+            const printTab = document.querySelector('a[href="print.html"]');
+            if (printTab) {
+                printTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'print.html';
+                });
+            }
+
+            // Settings tab
+            const settingsTab = document.querySelector('a[href="settings.html"]');
+            if (settingsTab) {
+                settingsTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'settings.html';
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load assessment data from localStorage (same key as assessment.html)
+            const ASSESSMENTS_KEY = 'grade5ReadingTracker_assessments';
+            const STUDENTS_KEY = 'grade5ReadingTracker_students';
+            let assessments = JSON.parse(localStorage.getItem(ASSESSMENTS_KEY)) || [];
+            let students = JSON.parse(localStorage.getItem(STUDENTS_KEY)) || [];
+
+            // Utility functions
+            function average(arr) {
+                if (!arr.length) return 0;
+                return arr.reduce((a, b) => a + b, 0) / arr.length;
+            }
+
+            // Summary Cards
+            function updateSummaryCards() {
+                // Average Word Recognition
+                const wrScores = assessments.map(a => a.wordRecognition);
+                const avgWR = wrScores.length ? (average(wrScores)).toFixed(1) : '0.0';
+
+                // Average Comprehension
+                const compScores = assessments.map(a => a.comprehension);
+                const avgComp = compScores.length ? (average(compScores)).toFixed(1) : '0.0';
+
+                // Assessments Completed
+                const totalAssessments = assessments.length;
+
+                // Improvement Rate (dummy calculation: last assessment vs first)
+                let improvementRate = '0.0';
+                if (assessments.length > 1) {
+                    const sorted = [...assessments].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    const firstWR = sorted[0].wordRecognition;
+                    const lastWR = sorted[sorted.length - 1].wordRecognition;
+                    improvementRate = ((lastWR - firstWR) / firstWR * 100).toFixed(1);
+                }
+
+                // Update DOM
+                document.querySelector('.stat-card .metric-value').textContent = `${avgWR}%`;
+                document.querySelector('.stat-card.success .metric-value').textContent = `${avgComp}%`;
+                document.querySelector('.stat-card.info .metric-value').textContent = totalAssessments;
+                document.querySelector('.stat-card.warning .metric-value').textContent = `${improvementRate}%`;
+            }
+
+            // Reading Level Distribution Table
+            function updateReadingLevelTable() {
+                const levels = ['Independent', 'Instructional', 'Frustration'];
+                const tbody = document.querySelector('#readingLevelTable tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                levels.forEach(level => {
+                    const filtered = assessments.filter(a => a.readingLevel === level);
+                    const count = filtered.length;
+                    const percent = assessments.length ? ((count / assessments.length) * 100).toFixed(1) : '0.0';
+                    const avgWR = filtered.length ? average(filtered.map(a => a.wordRecognition)).toFixed(1) : '0.0';
+                    const avgComp = filtered.length ? average(filtered.map(a => a.comprehension)).toFixed(1) : '0.0';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="reading-level level-${level.toLowerCase()}">${level}</span></td>
+                            <td>${count}</td>
+                            <td>${percent}%</td>
+                            <td>${avgWR}%</td>
+                            <td>${avgComp}%</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Assessment Type Summary Table
+            function updateAssessmentTypeTable() {
+                const types = [
+                    'Oral Reading in Filipino',
+                    'Oral Reading in English',
+                    'Silent Reading in Filipino',
+                    'Silent Reading in English',
+                    'Pre-test',
+                    'Post-test'
+                ];
+                const tbody = document.querySelector('#assessmentTypeTable tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                types.forEach(type => {
+                    const filtered = assessments.filter(a => a.type === type);
+                    const count = filtered.length;
+                    const avgWR = filtered.length ? average(filtered.map(a => a.wordRecognition)).toFixed(1) : '0.0';
+                    const avgComp = filtered.length ? average(filtered.map(a => a.comprehension)).toFixed(1) : '0.0';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${type}</td>
+                            <td>${count}</td>
+                            <td>${avgWR}%</td>
+                            <td>${avgComp}%</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Student Progress Table
+            function updateStudentProgressTable() {
+                const tbody = document.querySelector('#studentProgressTable tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                students.forEach(student => {
+                    const studentAssessments = assessments.filter(a => a.studentId == student.id);
+                    if (studentAssessments.length === 0) return;
+                    const sorted = [...studentAssessments].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    const first = sorted[0];
+                    const last = sorted[sorted.length - 1];
+                    const wrProgress = (last.wordRecognition - first.wordRecognition).toFixed(1);
+                    const compProgress = (last.comprehension - first.comprehension).toFixed(1);
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${student.name}</td>
+                            <td>${formatDate(first.date)}</td>
+                            <td>${formatDate(last.date)}</td>
+                            <td class="${wrProgress >= 0 ? 'improvement-positive' : 'improvement-negative'}">${wrProgress >= 0 ? '+' : ''}${wrProgress}%</td>
+                            <td class="${compProgress >= 0 ? 'improvement-positive' : 'improvement-negative'}">${compProgress >= 0 ? '+' : ''}${compProgress}%</td>
+                            <td><span class="reading-level level-${last.readingLevel.toLowerCase()}">${last.readingLevel}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Charts
+            function updateCharts() {
+                // Assessment Type Chart
+                const typeLabels = [
+                    'Oral Reading in Filipino',
+                    'Oral Reading in English',
+                    'Silent Reading in Filipino',
+                    'Silent Reading in English',
+                    'Pre-test',
+                    'Post-test'
+                ];
+                const wrData = typeLabels.map(type => {
+                    const filtered = assessments.filter(a => a.type === type);
+                    return filtered.length ? average(filtered.map(a => a.wordRecognition)).toFixed(1) : 0;
+                });
+                const compData = typeLabels.map(type => {
+                    const filtered = assessments.filter(a => a.type === type);
+                    return filtered.length ? average(filtered.map(a => a.comprehension)).toFixed(1) : 0;
+                });
+
+                const typeCtx = document.getElementById('assessmentTypeChart').getContext('2d');
+                if (window.typeChart) window.typeChart.destroy();
+                window.typeChart = new Chart(typeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: typeLabels,
+                        datasets: [
+                            {
+                                label: 'Word Recognition',
+                                data: wrData,
+                                backgroundColor: '#4e73df'
+                            },
+                            {
+                                label: 'Comprehension',
+                                data: compData,
+                                backgroundColor: '#1cc88a'
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Percentage (%)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // Gender Chart
+                const genderLabels = ['Male', 'Female'];
+                const maleIds = students.filter(s => s.gender === 'male').map(s => s.id);
+                const femaleIds = students.filter(s => s.gender === 'female').map(s => s.id);
+
+                const maleAssessments = assessments.filter(a => maleIds.includes(a.studentId));
+                const femaleAssessments = assessments.filter(a => femaleIds.includes(a.studentId));
+
+                const wrMale = maleAssessments.length ? average(maleAssessments.map(a => a.wordRecognition)).toFixed(1) : 0;
+                const wrFemale = femaleAssessments.length ? average(femaleAssessments.map(a => a.wordRecognition)).toFixed(1) : 0;
+                const compMale = maleAssessments.length ? average(maleAssessments.map(a => a.comprehension)).toFixed(1) : 0;
+                const compFemale = femaleAssessments.length ? average(femaleAssessments.map(a => a.comprehension)).toFixed(1) : 0;
+
+                const genderCtx = document.getElementById('genderChart').getContext('2d');
+                if (window.genderChart) window.genderChart.destroy();
+                window.genderChart = new Chart(genderCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: genderLabels,
+                        datasets: [
+                            {
+                                label: 'Word Recognition',
+                                data: [wrMale, wrFemale],
+                                backgroundColor: '#4e73df'
+                            },
+                            {
+                                label: 'Comprehension',
+                                data: [compMale, compFemale],
+                                backgroundColor: '#1cc88a'
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Percentage (%)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Format date utility
+            function formatDate(dateString) {
+                if (!dateString) return '';
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString(undefined, options);
+            }
+
+            // Initial render
+            updateSummaryCards();
+            updateReadingLevelTable();
+            updateAssessmentTypeTable();
+            updateStudentProgressTable();
+            updateCharts();
+        });
+    </script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load assessment data from localStorage (same key as assessment.html)
+    const ASSESSMENTS_KEY = 'grade5ReadingTracker_assessments';
+    const STUDENTS_KEY = 'grade5ReadingTracker_students';
+    let assessments = JSON.parse(localStorage.getItem(ASSESSMENTS_KEY)) || [];
+    let students = JSON.parse(localStorage.getItem(STUDENTS_KEY)) || [];
+
+    function average(arr) {
+        if (!arr.length) return 0;
+        return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    // Charts
+    function updateCharts() {
+        // Assessment Type Chart (Performance by Assessment Type)
+        const typeLabels = [
+            'Oral Reading in Filipino',
+            'Oral Reading in English',
+            'Silent Reading in Filipino',
+            'Silent Reading in English',
+            'Pre-test',
+            'Post-test'
+        ];
+        const wrData = typeLabels.map(type => {
+            const filtered = assessments.filter(a => a.type === type);
+            return filtered.length ? average(filtered.map(a => a.wordRecognition)).toFixed(1) : 0;
+        });
+        const compData = typeLabels.map(type => {
+            const filtered = assessments.filter(a => a.type === type);
+            return filtered.length ? average(filtered.map(a => a.comprehension)).toFixed(1) : 0;
+        });
+
+        const typeCtx = document.getElementById('assessmentTypeChart').getContext('2d');
+        if (window.typeChart) window.typeChart.destroy();
+        window.typeChart = new Chart(typeCtx, {
+            type: 'bar',
+            data: {
+                labels: typeLabels,
+                datasets: [
+                    {
+                        label: 'Word Recognition',
+                        data: wrData,
+                        backgroundColor: '#4e73df'
+                    },
+                    {
+                        label: 'Comprehension',
+                        data: compData,
+                        backgroundColor: '#1cc88a'
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                maintainAspectRatio: false
+            }
+        });
+
+        // Gender Chart (Performance by Gender)
+        const genderLabels = ['Male', 'Female'];
+        const maleIds = students.filter(s => s.gender === 'male').map(s => s.id);
+        const femaleIds = students.filter(s => s.gender === 'female').map(s => s.id);
+
+        const maleAssessments = assessments.filter(a => maleIds.includes(a.studentId));
+        const femaleAssessments = assessments.filter(a => femaleIds.includes(a.studentId));
+
+        const wrMale = maleAssessments.length ? average(maleAssessments.map(a => a.wordRecognition)).toFixed(1) : 0;
+        const wrFemale = femaleAssessments.length ? average(femaleAssessments.map(a => a.wordRecognition)).toFixed(1) : 0;
+        const compMale = maleAssessments.length ? average(maleAssessments.map(a => a.comprehension)).toFixed(1) : 0;
+        const compFemale = femaleAssessments.length ? average(femaleAssessments.map(a => a.comprehension)).toFixed(1) : 0;
+
+        const genderCtx = document.getElementById('genderChart').getContext('2d');
+        if (window.genderChart) window.genderChart.destroy();
+        window.genderChart = new Chart(genderCtx, {
+            type: 'bar',
+            data: {
+                labels: genderLabels,
+                datasets: [
+                    {
+                        label: 'Word Recognition',
+                        data: [wrMale, wrFemale],
+                        backgroundColor: '#4e73df'
+                    },
+                    {
+                        label: 'Comprehension',
+                        data: [compMale, compFemale],
+                        backgroundColor: '#1cc88a'
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // Initial render
+    updateCharts();
+});
+</script>
+
+<!-- Place this script at the top of every main HTML file (dashboard.html, students.html, assessment.html, etc.)
+This will ensure the user must log in first before accessing any page -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check authentication status
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || !currentUser.isAuthenticated) {
+        window.location.href = 'login.html';
+    }
+});
+</script>
+</body>
+</html>
